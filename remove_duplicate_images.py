@@ -87,23 +87,22 @@ def compare_images(image1, image2):
     image1['data'] = preprocess_image_change_detection(image1['data'])
     image2['data'] = preprocess_image_change_detection(image2['data'])
 
-    image1Size = image1['imageHeight'] * image1['imageWidth']
-    image2Size = image2['imageHeight'] * image2['imageWidth']
+    image1['size'] = math.prod(image1['data'].shape)
+    image2['size'] = math.prod(image2['data'].shape)
 
     # check if both images have the same size
-    if image1Size != image2Size:
+    if image1['size'] != image2['size']:
         # resize images when sizes are not matched
-        if image1Size > image2Size:
+        if image1['size'] > image2['size']:
             image2['data'] = cv2.resize(image2['data'], image1['data'].shape[::-1])
-        elif image1Size < image2Size:
+        elif image1['size'] < image2['size']:
             image1['data'] = cv2.resize(image1['data'], image2['data'].shape[::-1])
 
     # set the minimum contour area to be 1% of the image size
-    min_contour_area = image1['imageHeight'] * image1['imageWidth'] * CONTOUR_AREA_PERCENTAGE ** 2
-    score, _, thresh = compare_frames_change_detection(image1['data'], image2['data'],
-                                                       min_contour_area=min_contour_area)
+    min_contour_area = math.prod(image1['data'].shape) * CONTOUR_AREA_PERCENTAGE ** 2
+    score, _, _ = compare_frames_change_detection(image1['data'], image2['data'], min_contour_area=min_contour_area)
 
-    return score, thresh
+    return image1, image2, score
 
 
 def find_duplicates(directory):
@@ -148,20 +147,14 @@ def find_duplicates(directory):
             if image2['path'] in duplicates:
                 continue
 
-            image1['imageHeight'], image1['imageWidth'] = image1['data'].shape[:2]
-            image2['imageHeight'], image2['imageWidth'] = image2['data'].shape[:2]
+            imageResized1, imageResized2, score = compare_images(image1.copy(), image2.copy())
 
-            score, thresh = compare_images(image1.copy(), image2.copy())
-
-            if score > (CHANGE_PERCENTAGE * math.prod(thresh.shape)):
+            if score >= (CHANGE_PERCENTAGE * math.prod(imageResized1['data'].shape)):
                 continue
 
             logging.info('Found duplicate {}'.format(images[j]))
             # adding the lower resolution image to the duplicate list
-            if (image2['imageHeight']*image2['imageWidth']) > (image1['imageHeight']*image1['imageWidth']):
-                duplicates.append(image1['path'])
-            else:
-                duplicates.append(image2['path'])
+            duplicates.append(imageResized1['path'] if imageResized1['size'] < imageResized2['size'] else imageResized2['path'])
 
     logging.info('The search has been completed')
 

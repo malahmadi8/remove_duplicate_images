@@ -19,7 +19,7 @@ The program first runs find_duplicates function. This function perform the follo
 2- Check if the file is a valid image.
 
 - A valid image file should ends with one of the extension ('.png', '.jpg', '.jpeg', '.tiff', '.bmp', ‘.gif’).
-- Check if the image file is corrupted or contain an image.
+- Check if the image file is corrupted.
 
 3- Create a dictionary for the first image we want to compare
 
@@ -31,7 +31,7 @@ The program first runs find_duplicates function. This function perform the follo
 
 - Perform image preprocessing using preprocess_image_change_detection function.
 
-- Resize the two images when their resolutions are not matched using resize function from Opencv.
+- Resize the two images when their resolutions are not matched using the resize function from Opencv.
 
 - Compare the two images using compare_frames_change_detection.
 
